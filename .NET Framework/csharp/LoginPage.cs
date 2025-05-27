@@ -6,14 +6,14 @@ using System.Windows.Forms;
 
 namespace YourWorkspaceName
 {
-    public partial class Form1 : Form
+    public partial class LoginPage : Form
     {
         private static readonly HttpClient _httpClient = new HttpClient();
         private readonly KeyMasterAuthService _authService;
         private const string KeyMasterUidPlaceholder = "PASTE_YOUR_KEYMASTER_ACCOUNT_UID_HERE"; // DO NOT TOUCH ANYTHING HERE
         private string _myKeyMasterAccountUID = "YOUR KEYMASTER UID FROM KEYMASTER PROFILE";   // <<<--- REPLACE WITH YOUR KEYMASTER UID FROM KEYMASTER PROFILE
 
-        public Form1()
+        public LoginPage()
         {
             InitializeComponent();
 
@@ -35,7 +35,7 @@ namespace YourWorkspaceName
             }
         }
 
-        private void Form1_Load(object sender, EventArgs e)
+        private void LoginPage_Load(object sender, EventArgs e)
         {
             // You can load any initial data here if needed
         }
