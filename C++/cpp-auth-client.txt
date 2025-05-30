@@ -1,0 +1,183 @@
+// File: keymaster_auth_client.cpp
+// Purpose: C++ client for KeyMaster authentication (Windows, using WinHTTP)
+// Requires: Windows, WinHTTP, and linking with -lwinhttp
+// Note: For cross-platform, use libcurl instead of WinHTTP.
+#include <windows.h>
+#include <winhttp.h>
+#include <iostream>
+#include <string>
+#include <fstream>
+#include <sstream>
+#include <iomanip>
+#include <vector>
+#include <wincrypt.h>
+#pragma comment(lib, "winhttp.lib")
+#pragma comment(lib, "crypt32.lib")
+
+// --- Keymaster Authentication Client Class ---
+class KeymasterAuthClient {
+    std::string masterUserId;
+    std::string appVersion;
+    std::string hwid;
+    std::wstring host = L"keymaster-agni.vercel.app";
+
+    std::string getPersistentHWID(const std::string& appName = "YourCppApp") {
+        char* appData = nullptr;
+        size_t len = 0;
+        _dupenv_s(&appData, &len, "APPDATA");
+        std::string baseDir = appData ? appData : ".";
+        free(appData);
+        std::string dir = baseDir + "\\" + appName;
+        CreateDirectoryA(dir.c_str(), NULL);
+        std::string filePath = dir + "\\hwid.dat";
+        std::ifstream in(filePath);
+        std::string hwid;
+        if (in && std::getline(in, hwid) && !hwid.empty()) return hwid;
+        char computerName[MAX_COMPUTERNAME_LENGTH + 1];
+        DWORD size = sizeof(computerName);
+        GetComputerNameA(computerName, &size);
+        char userName[UNLEN + 1];
+        DWORD userSize = UNLEN + 1;
+        GetUserNameA(userName, &userSize);
+        std::string raw = std::string(computerName) + std::string(userName);
+        HCRYPTPROV hProv = 0;
+        HCRYPTHASH hHash = 0;
+        BYTE hash[32]; DWORD hashLen = 32;
+        std::ostringstream oss;
+        if (CryptAcquireContext(&hProv, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT)) {
+            if (CryptCreateHash(hProv, CALG_SHA_256, 0, 0, &hHash)) {
+                CryptHashData(hHash, (BYTE*)raw.c_str(), (DWORD)raw.size(), 0);
+                if (CryptGetHashParam(hHash, HP_HASHVAL, hash, &hashLen, 0)) {
+                    for (DWORD i = 0; i < hashLen; ++i) oss << std::hex << std::setw(2) << std::setfill('0') << (int)hash[i];
+                }
+                CryptDestroyHash(hHash);
+            }
+            CryptReleaseContext(hProv, 0);
+        }
+        hwid = oss.str();
+        std::ofstream out(filePath); out << hwid; out.close();
+        return hwid;
+    }
+
+    bool httpPostJson(const std::wstring& path, const std::string& json, std::string& response) {
+        HINTERNET hSession = WinHttpOpen(L"KeyMasterCppClient/1.0", WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
+        if (!hSession) return false;
+        HINTERNET hConnect = WinHttpConnect(hSession, host.c_str(), INTERNET_DEFAULT_HTTPS_PORT, 0);
+        if (!hConnect) { WinHttpCloseHandle(hSession); return false; }
+        HINTERNET hRequest = WinHttpOpenRequest(hConnect, L"POST", path.c_str(), NULL, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES, WINHTTP_FLAG_SECURE);
+        if (!hRequest) { WinHttpCloseHandle(hConnect); WinHttpCloseHandle(hSession); return false; }
+        BOOL bResults = WinHttpSendRequest(hRequest, L"Content-Type: application/json\r\n", -1, (LPVOID)json.c_str(), (DWORD)json.size(), (DWORD)json.size(), 0);
+        if (!bResults) { WinHttpCloseHandle(hRequest); WinHttpCloseHandle(hConnect); WinHttpCloseHandle(hSession); return false; }
+        bResults = WinHttpReceiveResponse(hRequest, NULL);
+        if (!bResults) { WinHttpCloseHandle(hRequest); WinHttpCloseHandle(hConnect); WinHttpCloseHandle(hSession); return false; }
+        DWORD dwSize = 0;
+        do {
+            DWORD dwDownloaded = 0;
+            if (!WinHttpQueryDataAvailable(hRequest, &dwSize)) break;
+            if (!dwSize) break;
+            std::vector<char> buf(dwSize + 1);
+            ZeroMemory(buf.data(), dwSize + 1);
+            if (!WinHttpReadData(hRequest, buf.data(), dwSize, &dwDownloaded)) break;
+            response.append(buf.data(), dwDownloaded);
+        } while (dwSize > 0);
+        WinHttpCloseHandle(hRequest); WinHttpCloseHandle(hConnect); WinHttpCloseHandle(hSession);
+        return true;
+    }
+
+    std::string toJson(const LicenseAuthRequest& req) {
+        std::ostringstream oss;
+        oss << "{\"masterUserId\":\"" << req.masterUserId << "\",";
+        oss << "\"licenseKey\":\"" << req.licenseKey << "\",";
+        oss << "\"hwid\":\"" << req.hwid << "\",";
+        oss << "\"appVersion\":\"" << req.appVersion << "\"";
+        if (!req.username.empty()) oss << ",\"username\":\"" << req.username << "\"";
+        oss << "}";
+        return oss.str();
+    }
+    std::string toJson(const ClientUserAuthRequest& req) {
+        std::ostringstream oss;
+        oss << "{\"masterUserId\":\"" << req.masterUserId << "\",";
+        oss << "\"username\":\"" << req.username << "\",";
+        oss << "\"passwordPlainText\":\"" << req.passwordPlainText << "\",";
+        oss << "\"appVersion\":\"" << req.appVersion << "\"}";
+        return oss.str();
+    }
+
+public:
+    KeymasterAuthClient(const std::string& masterUserId, const std::string& appVersion, const std::string& appName = "MyCppKeyMasterApp")
+        : masterUserId(masterUserId), appVersion(appVersion) {
+        hwid = getPersistentHWID(appName);
+    }
+
+    bool AuthenticateLicenseKey(const std::string& licenseKey, std::string& response, const std::string& username = "") {
+        LicenseAuthRequest req{ masterUserId, licenseKey, hwid, appVersion, username };
+        std::string json = toJson(req);
+        return httpPostJson(L"/api/authenticate-key", json, response);
+    }
+
+    bool AuthenticateClientUser(const std::string& username, const std::string& password, std::string& response) {
+        ClientUserAuthRequest req{ masterUserId, username, password, appVersion };
+        std::string json = toJson(req);
+        return httpPostJson(L"/api/authenticate-client-user", json, response);
+    }
+
+    std::string GetHWID() const { return hwid; }
+    std::string GetAppVersion() const { return appVersion; }
+    std::string GetMasterUserId() const { return masterUserId; }
+};
+
+// --- Example Usage ---
+int main() {
+    std::string masterUserId = "PASTE_YOUR_KEYMASTER_ACCOUNT_UID_HERE"; // Replace with your UID
+    if (masterUserId == "PASTE_YOUR_KEYMASTER_ACCOUNT_UID_HERE") {
+        std::cerr << "CRITICAL CONFIGURATION ERROR: masterUserId is not set. Please replace the placeholder with your actual KeyMaster UID from your Profile page.\n";
+        return 1;
+    }
+    std::string appVersion = "1.0.0.0";
+    KeymasterAuthClient client(masterUserId, appVersion);
+    std::cout << "--- KeyMaster C++ Client Example (.NET-style) ---\n";
+    std::cout << "Using MasterUserId: " << client.GetMasterUserId() << "\nUsing HWID: " << client.GetHWID() << "\nApp Version: " << client.GetAppVersion() << "\n";
+    // License Key Auth
+    std::cout << "Enter License Key (or blank to skip): ";
+    std::string licenseKey; std::getline(std::cin, licenseKey);
+    if (!licenseKey.empty()) {
+        std::string resp;
+        if (client.AuthenticateLicenseKey(licenseKey, resp)) {
+            std::cout << "\nLicense Key Auth Response:\n" << resp << "\n";
+        } else {
+            std::cerr << "HTTP request failed.\n";
+        }
+    }
+    // Client User Auth
+    std::cout << "Enter Client App Username (or blank to skip): ";
+    std::string username; std::getline(std::cin, username);
+    if (!username.empty()) {
+        std::cout << "Enter Password: ";
+        std::string password; std::getline(std::cin, password);
+        std::string resp;
+        if (client.AuthenticateClientUser(username, password, resp)) {
+            std::cout << "\nClient User Auth Response:\n" << resp << "\n";
+        } else {
+            std::cerr << "HTTP request failed.\n";
+        }
+    }
+    return 0;
+}
+
+// --- C++ CODE EXAMPLE LOADER FOR INTEGRATION GUIDE ---
+// This is a placeholder for the integration-guide page logic.
+// When the user switches to the C++ tab, fetch the contents of 'docs/cpp-auth-client.txt'
+// and display it in a <CodeBlock> component or similar UI element.
+// Example (React/Next.js pseudo-code):
+//
+// const [cppCode, setCppCode] = useState("");
+//
+// useEffect(() => {
+//   if (selectedTab === "cpp") {
+//     fetch("/docs/cpp-auth-client.txt")
+//       .then(res => res.text())
+//       .then(setCppCode);
+//   }
+// }, [selectedTab]);
+//
+// <CodeBlock code={cppCode} language="cpp" title="C++ Keymaster Auth Client" />
