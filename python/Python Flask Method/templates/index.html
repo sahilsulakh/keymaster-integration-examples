@@ -1,31 +1,42 @@
-// WRITE YOUR HTML CODINGS HERE
-// BELOW IS A VERY SIMPLE EXAMPLE
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>KeyMaster | Secure Login</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
   <div class="background-glow"></div>
   <div class="login-container">
     <h2>KeyMaster Login</h2>
-    <form action="/auth" method="POST" autocomplete="off">
-      <div class="input-group">
-        <label>Username</label>
-        <input type="text" name="username" required />
-      </div>
-      <div class="input-group">
-        <label>Password</label>
-        <input type="password" name="password" required />
-      </div>
-      <button type="submit">Login</button>
-    </form>
+    {% if auth_result is defined %}
+      {% if auth_result %}
+        <h2 style="color:lime;">Login Successful</h2>
+        <p>{{ message }}</p>
+        <!-- Dashboard content can go here -->
+        <div class="dashboard">
+          <h3>Welcome, {{ username }}!</h3>
+          <p>This is your dashboard.</p>
+        </div>
+      {% else %}
+        <h2 style="color:red;">Login Failed</h2>
+        <p>{{ message }}</p>
+      {% endif %}
+    {% else %}
+      <form action="/auth" method="POST" autocomplete="off">
+        <div class="input-group">
+          <label>Username</label>
+          <input type="text" name="username" required />
+        </div>
+        <div class="input-group">
+          <label>Password</label>
+          <input type="password" name="password" required />
+        </div>
+        <button type="submit">Login</button>
+      </form>
+    {% endif %}
     <p class="footer">© 2025 KeyMaster Agni</p>
   </div>
 </body>
 </html>
-
