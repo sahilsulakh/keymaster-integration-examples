@@ -110,11 +110,11 @@ Example `.env.local`:
 
 ```
 # KeyMaster Configuration
-KEYMASTER_ACCOUNT_UID=your_keymaster_uid_here
+KEYMASTER_ACCOUNT_UID=your_keymaster_uid_here          <<<--- GET IT FROM THE KEYMASTER PROFILE PAGE
 APP_VERSION=1.0.0
 
 # Flask Configuration
-SECRET_KEY=your_super_secret_key_here
+SECRET_KEY=your_super_secret_key_here                  <<<-- YOU CAN SET IT RANDOM OR USE PYTHON TO GENERATE A STRONG RANDOM STRING
 FLASK_ENV=production
 
 # Server Configuration
