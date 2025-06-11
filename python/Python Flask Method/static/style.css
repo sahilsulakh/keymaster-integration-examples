@@ -1,1 +1,135 @@
-WRITE THE CODINGS FOR YOUR CSS FILE 
+// WRITE THE CODINGS FOR YOUR CSS FILE HERE
+// BELOW IS A VERY SIMPLE EXAMPLE
+
+/* Global Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background: radial-gradient(ellipse at top, #0d0d0d 0%, #050505 100%);
+  color: #fff;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+/* Background Glow Animation */
+.background-glow {
+  position: absolute;
+  width: 800px;
+  height: 800px;
+  background: radial-gradient(circle, #ff007f33, #00fff788);
+  filter: blur(120px);
+  animation: pulse 8s infinite ease-in-out;
+  top: -200px;
+  left: -200px;
+  z-index: 0;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+}
+
+/* Glassmorphic Card */
+.login-container {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  padding: 40px;
+  width: 350px;
+  position: relative;
+  z-index: 2;
+  box-shadow: 0 0 25px #00fff7aa;
+  animation: fadeIn 1.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    transform: translateY(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0px);
+    opacity: 1;
+  }
+}
+
+/* Headings */
+.login-container h2 {
+  text-align: center;
+  margin-bottom: 30px;
+  color: #00fff7;
+  text-shadow: 0 0 10px #00fff7aa;
+}
+
+/* Form Inputs */
+.input-group {
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.input-group label {
+  margin-bottom: 5px;
+  font-size: 14px;
+  color: #ccc;
+}
+
+.input-group input {
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-size: 16px;
+  outline: none;
+  transition: 0.3s;
+}
+
+.input-group input:focus {
+  background-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 0 10px #00fff7aa;
+}
+
+/* Submit Button */
+button {
+  width: 100%;
+  padding: 12px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #000;
+  background: linear-gradient(to right, #00fff7, #ff007f);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: 0.3s;
+  text-transform: uppercase;
+}
+
+button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 20px #00fff7aa;
+}
+
+/* Footer Text */
+.footer {
+  margin-top: 20px;
+  text-align: center;
+  font-size: 12px;
+  color: #888;
+}
+
