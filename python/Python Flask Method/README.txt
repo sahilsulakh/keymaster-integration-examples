@@ -1,116 +1,170 @@
-🔐 KeyMaster Python + Flask Web Integration
+KeyMaster Python + Flask Web Integration
 
-A lightweight, secure Python + Flask-based login system for authenticating users via the KeyMaster AGNI API.
+A secure, production-ready Python + Flask-based login system for authenticating users via the KeyMaster AGNI API.
 
-This project demonstrates:
+This project features:
 
-🧔 Username/Password authentication  
-💻 Persistent HWID generation per user  
-⚡ Beautiful and animated HTML/CSS frontend example  
-🔁 Easy-to-customize Flask backend structure
+- 🧔 Secure username/password authentication
+- 💻 Persistent HWID generation per user
+- ⚡ Responsive, animated HTML/CSS frontend
+- 🔒 Hardened Flask backend with security best practices
+- 🛡️ Security headers, session management, and logging
+- 🔁 All-in-one login and dashboard UI (no separate dashboard/auth_result files)
 
 ------------------------------------------------------------
 
-📁 Project Structure
+## 📁 Project Structure
 
+```
 your-project/
 ├── templates/
-│   └── index.html           → Your login UI (Username/Password)
+│   └── index.html           → Login UI & dashboard logic (all-in-one)
 ├── static/
 │   └── style.css            → CSS styles and animations
-├── app.py                   → Flask server for authentication logic
+├── app.py                   → Flask server with production security
 ├── keymaster_auth.py        → KeyMaster API client & HWID logic
+├── gunicon.conf.py          → Gunicorn config for production deployment
+├── .env.local               → Environment variables (secrets, config)
+├── requirements.txt         → Python dependencies
+```
 
 ------------------------------------------------------------
 
-🚀 Getting Started
+## 🚀 Getting Started
 
-✅ Prerequisites
+### Prerequisites
 
-Ensure Python 3.x is installed. Then install required packages:
+- Python 3.x
+- pip (Python package manager)
 
-pip install flask requests
+Install required packages:
+
+```
+pip install -r requirements.txt
+```
 
 ------------------------------------------------------------
 
-🛠️ Setup Instructions
+## 🛠️ Setup Instructions
 
 1. Clone or download this project to your local machine.
-2. Open app.py and replace:
-   MY_KEYMASTER_ACCOUNT_UID = "YOUR-KEYMASTER-UID-HERE" with your actual KeyMaster UID.
-3. Customize the UI in templates/index.html.
-4. Modify animation or themes in static/style.css to fit your brand.
+2. Copy `.env.local` and set your secrets and config (see sample in repo).
+3. Ensure your KeyMaster UID is set in `.env.local` as `KEYMASTER_ACCOUNT_UID`.
+4. Customize the UI in `templates/index.html` as needed.
+5. Edit `static/style.css` for your branding.
 
 ------------------------------------------------------------
 
-▶️ Running the App
+## ▶️ Running the App
 
 Start the Flask server:
 
+```
 python app.py
+```
 
-Then open your browser and navigate to:
+By default, the app runs on:
 
-http://localhost:5000
+    http://localhost:3000
 
-Login with your registered KeyMaster AGNI credentials.  
-You will receive a success or failure message based on your authentication.
+Login with your registered KeyMaster AGNI credentials. You will see a success or failure message, and on success, the dashboard will be shown on the same page.
 
 ------------------------------------------------------------
 
-🔐 Using KeyMaster API
+## 🔐 Using KeyMaster API
 
 Authenticate with Username and Password:
 
+```python
 from keymaster_auth import authenticate_client_user
-
 response = authenticate_client_user(master_user_id, username, password, app_version)
+```
 
 Authenticate with License Key (optional):
 
+```python
 from keymaster_auth import authenticate_license_key
-
 response = authenticate_license_key(master_user_id, license_key, hwid, app_version, username=None)
+```
 
 ------------------------------------------------------------
 
-💡 HWID Generation
+## 💡 HWID Generation
 
 HWID (Hardware ID) is used to uniquely identify a user's device.
 
+```python
 from keymaster_auth import get_persistent_hwid
-
 hwid = get_persistent_hwid("YourAppName")
+```
 
 This ensures licensing remains device-bound, increasing security and preventing key sharing.
 
 ------------------------------------------------------------
 
-📌 Important Notes
+## 🔑 Environment Configuration
 
-- Fully supports Windows, Linux, and macOS
-- Session/token system can be added on top
-- Easily extend to include dashboards, file tools, or client portals
-- Built to be modular, clean, and API-focused
+Before running the app, you must set up your environment variables in `.env.local` (or `.env`).
+
+Example `.env.local`:
+
+```
+# KeyMaster Configuration
+KEYMASTER_ACCOUNT_UID=your_keymaster_uid_here
+APP_VERSION=1.0.0
+
+# Flask Configuration
+SECRET_KEY=your_super_secret_key_here
+FLASK_ENV=production
+
+# Server Configuration
+PORT=3000
+HOST=0.0.0.0
+
+# Security Settings
+SESSION_TIMEOUT=1800
+
+# Logging
+LOG_LEVEL=INFO
+```
+
+### What to change:
+- `KEYMASTER_ACCOUNT_UID`: Get this from your KeyMaster AGNI dashboard or admin panel. This is your unique account identifier for API authentication.
+- `SECRET_KEY`: Generate a strong random string (e.g., using `python -c "import secrets; print(secrets.token_hex(32))"`) and keep it secret. Used for Flask session security.
+- Adjust other values as needed for your deployment (port, session timeout, etc).
+
+**Never commit your `.env.local` or secrets to public repositories!**
 
 ------------------------------------------------------------
 
-🧱 Built With
+## 📌 Production Notes
 
-- Python 3.x  
-- Flask  
-- HTML/CSS (Responsive & Animated)  
+- Secure session and cookie settings enabled
+- Security headers and rate limiting in place
+- Logging to file and console for auditability
+- Environment variables loaded from `.env.local` (use `python-dotenv`)
+- All authentication and dashboard logic handled in `index.html`
+- No separate dashboard or auth_result templates needed
+- Modular, clean, and API-focused codebase
+
+------------------------------------------------------------
+
+## 🧱 Built With
+
+- Python 3.x
+- Flask
+- HTML/CSS (Responsive & Animated)
 - KeyMaster AGNI API
 
 ------------------------------------------------------------
 
-📜 License
+## 📜 License
 
 This project is under the MIT License – free to use, modify, and distribute.
 
 ------------------------------------------------------------
 
-🙌 Credits
+## 🙌 Credits
 
 Crafted with ❤️ by Agniveer Corporation  
 Official KeyMaster AGNI Python Web Client Integration
