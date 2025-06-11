@@ -63,6 +63,18 @@ Start the Flask server:
 python app.py
 ```
 
+Or, for production (on Linux/WSL/Docker), use Gunicorn:
+
+```
+gunicorn app:app
+```
+
+If you have a custom Gunicorn config file:
+
+```
+gunicorn --config gunicorn.conf.py app:app
+```
+
 By default, the app runs on:
 
     http://localhost:3000
